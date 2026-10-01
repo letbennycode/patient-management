@@ -1,0 +1,9 @@
+# Secrets
+.env
+
+# Assignment text: kept locally for Claude's agents, not published with the submission
+docs/take-home.md
+
+# Dependencies / build output
+node_modules/
+dist/
