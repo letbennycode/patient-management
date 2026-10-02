@@ -73,6 +73,25 @@ Defined in `.env.example`.
 | `LLM_MODEL` (optional)                     | Model used for LLM summaries                                                |
 | `VITE_API_URL`                             | API base URL used by the frontend (default `http://localhost:8000`)         |
 
+### Try the LLM summary (optional)
+
+The app works without this; the summary falls back to a template. To try the LLM version:
+
+1. Sign in to the [Anthropic Console](https://console.anthropic.com/), add a little credit under **Billing** if the account has none, then go to **API keys** and click **Create Key**. Copy it now; it is shown only once.
+2. Copy `.env.example` to `.env` if you have not already, and set:
+   ```
+   LLM_SUMMARY_ENABLED=true
+   LLM_API_KEY=sk-ant-...
+   ```
+   `.env` is gitignored. Never put a real key in `.env.example` or commit it.
+3. Recreate the backend so it picks up the new values (a plain `restart` does not reload `.env`):
+   ```
+   docker compose up -d --force-recreate backend
+   ```
+4. Open a patient with notes and check the summary, or call `GET /patients/{id}/summary` and look for `"source": "llm"`. `"source": "template"` means the flag or key is missing, or the call failed and fell back.
+
+Only redacted text from fake seed data is sent to Anthropic (see _LLM privacy_ below). Each summary request is a paid API call; the default Haiku model costs very little at this scale.
+
 ## Features by part of the assignment
 
 - **Foundation:** Vite + React + strict TypeScript; Tailwind + shadcn/ui; React Router; TanStack Query; Zustand; oxlint + Prettier; FastAPI with `GET /health`; Alembic migrations; idempotent seed.
