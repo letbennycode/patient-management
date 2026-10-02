@@ -1,10 +1,13 @@
+import { lazy } from 'react'
 import { Route, Routes } from 'react-router-dom'
 import { AppLayout } from '@/components/layout/AppLayout'
-import DashboardPage from '@/pages/DashboardPage'
 import NotFoundPage from '@/pages/NotFoundPage'
-import PatientDetailPage from '@/pages/PatientDetailPage'
-import PatientFormPage from '@/pages/PatientFormPage'
-import PatientsPage from '@/pages/PatientsPage'
+
+// Route-level code splitting; the 404 page stays eager so it renders instantly.
+const DashboardPage = lazy(() => import('@/pages/DashboardPage'))
+const PatientDetailPage = lazy(() => import('@/pages/PatientDetailPage'))
+const PatientFormPage = lazy(() => import('@/pages/PatientFormPage'))
+const PatientsPage = lazy(() => import('@/pages/PatientsPage'))
 
 export default function App() {
   return (

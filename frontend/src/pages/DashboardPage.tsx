@@ -79,6 +79,49 @@ function CountCard({ label, to, status }: { label: string; to: string; status?: 
   )
 }
 
+function StatusChart() {
+  const queries = PATIENT_STATUSES.map((status) => ({
+    status,
+    // Same query keys as the count cards, so these are cache hits.
+    // eslint-disable-next-line react-hooks/rules-of-hooks -- PATIENT_STATUSES is a constant
+    total: usePatients({ page_size: 1, status }).data?.total,
+  }))
+  const sum = queries.reduce((n, q) => n + (q.total ?? 0), 0)
+  if (queries.some((q) => q.total === undefined) || sum === 0) return null
+
+  return (
+    <section aria-labelledby="status-chart-title" className="mt-8">
+      <h2 id="status-chart-title" className="mb-3 text-sm font-medium">
+        Patients by status
+      </h2>
+      <div
+        role="img"
+        aria-label={queries.map((q) => `${q.status}: ${q.total}`).join(', ')}
+        className="flex h-3 w-full overflow-hidden rounded-full bg-muted"
+      >
+        {queries.map((q) => (
+          <div
+            key={q.status}
+            className={STATUS_DOTS[q.status]}
+            style={{ width: `${((q.total ?? 0) / sum) * 100}%` }}
+          />
+        ))}
+      </div>
+      <ul className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-sm text-muted-foreground">
+        {queries.map((q) => (
+          <li key={q.status} className="flex items-center gap-2">
+            <span aria-hidden className={cn('size-2 rounded-full', STATUS_DOTS[q.status])} />
+            {capitalize(q.status)}{' '}
+            <span className="tabular-nums text-foreground">
+              {q.total} ({Math.round(((q.total ?? 0) / sum) * 100)}%)
+            </span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  )
+}
+
 export default function DashboardPage() {
   const total = usePatients({ page_size: 1 })
 
@@ -107,6 +150,7 @@ export default function DashboardPage() {
               />
             ))}
           </div>
+          <StatusChart />
           <Link
             to="/patients"
             className="group mt-8 inline-flex items-center gap-1.5 text-sm font-medium text-foreground underline-offset-4 hover:underline"

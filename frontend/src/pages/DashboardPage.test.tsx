@@ -36,6 +36,16 @@ describe('DashboardPage', () => {
     expect(countFor('Critical')).toHaveTextContent('12')
   })
 
+  it('shows a status distribution chart with percentages', async () => {
+    useCounts()
+    renderWithProviders(<DashboardPage />)
+
+    expect(
+      await screen.findByRole('img', { name: /active: 70, inactive: 38, critical: 12/ }),
+    ).toBeInTheDocument()
+    expect(screen.getByText('70 (58%)')).toBeInTheDocument()
+  })
+
   it('links each card to the list filtered by its status', async () => {
     useCounts()
     renderWithProviders(<DashboardPage />)

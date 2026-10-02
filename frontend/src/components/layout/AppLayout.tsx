@@ -1,9 +1,10 @@
 import { MenuIcon, PlusIcon } from 'lucide-react'
-import { useState } from 'react'
+import { Suspense, useState } from 'react'
 import { Link, Outlet } from 'react-router-dom'
 import { Logo, LogoMark } from '@/components/Logo'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { Button, buttonVariants } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
 import {
   Sheet,
   SheetContent,
@@ -64,7 +65,9 @@ export function AppLayout() {
         </header>
         <main className="glow min-w-0 flex-1 overflow-y-auto bg-no-repeat">
           <div className="mx-auto w-full max-w-6xl px-4 py-6 md:px-8 md:py-10">
-            <Outlet />
+            <Suspense fallback={<Skeleton className="h-40 w-full" />}>
+              <Outlet />
+            </Suspense>
           </div>
         </main>
       </div>

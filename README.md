@@ -74,7 +74,7 @@ Defined in `.env.example`.
 ## Features by part of the assignment
 
 - **Foundation:** Vite + React + strict TypeScript; Tailwind + shadcn/ui; React Router; TanStack Query; Zustand; oxlint + Prettier; FastAPI with `GET /health`; Alembic migrations; idempotent seed.
-- **Dashboard:** responsive layout (header, sidebar that becomes a drawer on small screens, main area); dashboard home with patient counts per status; patient list with name/age/last visit/status, debounced non-blocking search, status filter, sorting, pagination; patient detail page; 404 page.
+- **Dashboard:** responsive layout (header, sidebar that becomes a drawer on small screens, main area); dashboard home with patient counts per status and a status distribution bar; patient list with name/age/last visit/status, debounced non-blocking search, status filter, sorting, pagination; patient detail page; 404 page.
 - **Notes and summary:** add, list and delete timestamped notes; `GET /patients/{id}/summary` returns identifiers, a narrative built from the notes, conditions and allergies.
 - **Forms:** one create/edit form with Zod validation mirroring the server rules, server 422 errors mapped onto fields, and a clear message on network failure (input is preserved).
 - **Containerization:** `docker compose up` starts db, backend and frontend.
@@ -83,8 +83,8 @@ Defined in `.env.example`.
 
 - Advanced backend: sort/filter/search query params, Alembic migrations, request logging middleware (request ID, route template, status, duration; never query strings or patient data).
 - Testing and quality: pytest API/service tests and Vitest component tests.
-- Developer experience: hot reload in Docker for both services.
-- UI/UX and performance: dark/light/system theme toggle (persisted, no flash on load); TanStack Virtual windowing when a page shows more than 50 rows (page size 100).
+- Developer experience: hot reload in Docker for both services; GitHub Actions CI (`.github/workflows/ci.yml`) running ruff and pytest (against Postgres 16) plus lint, typecheck, tests and build for the frontend.
+- UI/UX and performance: dark/light/system theme toggle (persisted, no flash on load); TanStack Virtual windowing when a page shows more than 50 rows (page size 100); route-level code splitting with `React.lazy`; a dependency-free status chart on the dashboard.
 
 ## API
 
@@ -127,4 +127,4 @@ This is a take-home demo and **must not be used with real PHI as it stands**. It
 
 ## What I'd do next
 
-Authentication and roles, an audit log for PHI access, rate limiting, soft delete/archive, note editing with authorship, real-time updates, CI, and end-to-end tests.
+Authentication and roles, an audit log for PHI access, rate limiting, soft delete/archive, note editing with authorship, real-time updates, and end-to-end tests.
