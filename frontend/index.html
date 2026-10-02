@@ -4,7 +4,18 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>frontend</title>
+    <title>Patient Management</title>
+    <script>
+      // Apply the stored theme before first paint to avoid a flash of the wrong theme.
+      try {
+        var stored = JSON.parse(localStorage.getItem('theme') || '{}').state
+        var theme = (stored && stored.theme) || 'system'
+        var dark =
+          theme === 'dark' ||
+          (theme === 'system' && matchMedia('(prefers-color-scheme: dark)').matches)
+        if (dark) document.documentElement.classList.add('dark')
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <div id="root"></div>

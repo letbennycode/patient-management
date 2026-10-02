@@ -7,10 +7,12 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     database_url: str
-    test_database_url: str | None = None
     seed_on_startup: bool = True
     cors_origins: str = "http://localhost:5173"
-    llm_api_key: str | None = None  # optional; used by the summary endpoint (spec 09)
+    # The LLM summary needs BOTH the flag and a key, so a stray key never sends data anywhere.
+    llm_summary_enabled: bool = False
+    llm_api_key: str | None = None
+    llm_model: str = "claude-haiku-4-5-20251001"
 
     @property
     def cors_origin_list(self) -> list[str]:
