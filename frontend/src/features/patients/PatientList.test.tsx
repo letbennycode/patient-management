@@ -9,6 +9,7 @@ import { mockMatchMedia } from '@/test/matchMedia'
 import { renderWithProviders } from '@/test/render'
 import { recordRequests, server } from '@/test/server'
 import { PatientList } from './PatientList'
+import { useSearchStore } from './searchStore'
 
 /** Serves `patients` with server-side search, status filter and pagination, like the API. */
 function serve(patients: Patient[]) {
@@ -112,7 +113,7 @@ describe('PatientList', () => {
       await waitFor(() => expect(searched()).toHaveLength(1))
       expect(searched()[0].url.searchParams.get('search')).toBe('bra')
       expect(searched()[0].url.searchParams.get('page')).toBe('1')
-      expect(location().search).toBe('?search=bra')
+      expect(location().search).toBe('') // the term is PHI: never in the URL
 
       // Previous results stay visible with a non-blocking indicator.
       expect(screen.getByRole('link', { name: 'Alpha Tester' })).toBeInTheDocument()
@@ -255,7 +256,8 @@ describe('PatientList', () => {
       const user = userEvent.setup()
       serve([alpha, bravo])
       const requests = recordRequests()
-      const { location } = renderList('/patients?search=zzz&status=inactive')
+      useSearchStore.setState({ search: 'zzz' })
+      const { location } = renderList('/patients?status=inactive')
 
       expect(await screen.findByText('No patients match your search')).toBeInTheDocument()
       expect(screen.getByRole('searchbox', { name: 'Search patients' })).toHaveValue('zzz')

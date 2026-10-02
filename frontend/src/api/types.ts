@@ -58,8 +58,14 @@ export interface PatientListParams {
   order?: SortOrder
 }
 
+/** Row of GET /patients: only what the list shows (the full record has contact and clinical data). */
+export type PatientListItem = Pick<
+  Patient,
+  'id' | 'first_name' | 'last_name' | 'age' | 'status' | 'last_visit'
+>
+
 export interface PatientPage {
-  items: Patient[]
+  items: PatientListItem[]
   total: number
   page: number
   page_size: number

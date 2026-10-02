@@ -62,6 +62,7 @@ export default function PatientDetailPage() {
       </Link>
       <PageHeader
         title={name}
+        documentTitle="Patient details"
         description={
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
             <StatusBadge status={patient.status} />

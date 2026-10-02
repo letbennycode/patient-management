@@ -46,7 +46,16 @@ def test_list_patients_returns_page_envelope_with_defaults(
     assert body["page"] == 1
     assert body["page_size"] == 20
     assert len(body["items"]) == 2
-    assert set(body["items"][0]) == PATIENT_KEYS
+
+
+def test_list_items_hold_only_what_the_list_shows(
+    client: TestClient, make_patient: MakePatient
+) -> None:
+    make_patient(email="zelda@example.com", allergies=["Latex"])
+
+    item = client.get("/patients").json()["items"][0]
+
+    assert set(item) == {"id", "first_name", "last_name", "age", "status", "last_visit"}
 
 
 def test_list_patients_returns_empty_page_when_no_patients(client: TestClient) -> None:

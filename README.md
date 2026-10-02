@@ -101,13 +101,14 @@ Errors use FastAPI's `{"detail": ...}` body: 404 for missing resources, 422 for 
 
 ## Decisions
 
-- **Server state vs UI state:** TanStack Query owns everything fetched from the API (caching, invalidation, retries); Zustand holds only UI state (the theme). List view state (search, filter, sort, page) lives in the URL so it is shareable and survives back/forward.
+- **Server state vs UI state:** TanStack Query owns everything fetched from the API (caching, invalidation, retries); Zustand holds only UI state (the theme). List view state (filter, sort, page) lives in the URL so it is shareable and survives back/forward. The search term is held in memory only, because names are PHI and must not end up in browser history or shared links.
 - **100+ patients:** pagination, search, sort and filter all happen in SQL (`LIMIT/OFFSET` + `COUNT`). The UI only ever holds one page; very large pages are windowed with TanStack Virtual.
 - **Non-blocking search:** the input is local state, the debounced (300 ms) value drives the query, and previous results stay visible while the next page loads.
 - **Validation twice, same rules:** Pydantic on the server, Zod on the client. Server errors are mapped back onto form fields.
 - **Summary:** template-first so it works offline and deterministically; the LLM is optional and any failure or timeout falls back to the template. Identifiers, conditions and allergies always come from the database, not the model.
 - **LLM privacy:** off unless `LLM_SUMMARY_ENABLED=true` and a key is set. Text sent to the model is redacted first (`services/redaction.py`): no name, no dates, age capped at 90+, the patient's own identifiers masked wherever they appear in notes, and emails, phones, SSNs, dates, addresses, ZIPs, IDs, URLs, IPs and titled names masked by pattern. Redaction is best-effort, not a guarantee (free text can hold identifiers no pattern recognises), so still use it only with fake data or under a BAA.
-- **Privacy:** seed data is fake; logs never contain patient fields, note contents, search terms or path IDs (uvicorn's access log, which includes query strings, is disabled in the container).
+- **Privacy:** seed data is fake; logs never contain patient fields, note contents, search terms or path IDs (uvicorn's access log, which includes query strings, is disabled in the container). The tab title never shows a patient's name, `GET /patients` returns only the fields the list shows (the full record is `GET /patients/{id}`), and a caller's `X-Request-ID` is only reused if it is a UUID.
+- **Containers:** both run as a non-root user.
 - **IDs and ages:** UUID primary keys; `age` is derived at read time rather than stored.
 
 ## Assumptions
@@ -117,6 +118,12 @@ Errors use FastAPI's `{"detail": ...}` body: 404 for missing resources, 422 for 
 - Notes are immutable, have no author (there are no users yet) and are not paginated.
 - Offset pagination rather than infinite scroll.
 
+## Not ready for real patient data
+
+This is a take-home demo and **must not be used with real PHI as it stands**. It has no authentication or authorization, no audit log of who read what, no rate limiting (every summary request can be a paid third-party LLM call when the LLM is enabled), no TLS or encryption at rest, and no data retention or deletion policy. Redaction before the LLM is best-effort.
+
+If you change dependencies and the frontend misbehaves, run `docker compose up --build -V`: the `node_modules` volume survives a plain rebuild.
+
 ## What I'd do next
 
-Authentication and roles, an audit log for PHI access, soft delete/archive, note editing with authorship, real-time updates, CI, and end-to-end tests.
+Authentication and roles, an audit log for PHI access, rate limiting, soft delete/archive, note editing with authorship, real-time updates, CI, and end-to-end tests.

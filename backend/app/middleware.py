@@ -1,5 +1,4 @@
 import logging
-import re
 import time
 import uuid
 from collections.abc import Awaitable, Callable
@@ -11,7 +10,14 @@ from starlette.middleware.base import BaseHTTPMiddleware
 logger = logging.getLogger("app.request")
 
 REQUEST_ID_HEADER = "X-Request-ID"
-SAFE_ID = re.compile(r"^[A-Za-z0-9-]{1,64}$")
+
+
+def _accepted_request_id(incoming: str) -> str:
+    """Reuse a caller's ID only if it is a UUID, so callers can't write free text into logs."""
+    try:
+        return str(uuid.UUID(incoming))
+    except ValueError:
+        return str(uuid.uuid4())
 
 
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
@@ -23,8 +29,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
     async def dispatch(
         self, request: Request, call_next: Callable[[Request], Awaitable[Response]]
     ) -> Response:
-        incoming = request.headers.get(REQUEST_ID_HEADER, "")
-        request_id = incoming if SAFE_ID.match(incoming) else str(uuid.uuid4())
+        request_id = _accepted_request_id(request.headers.get(REQUEST_ID_HEADER, ""))
         start = time.perf_counter()
         status_code = 500
         error: str | None = None

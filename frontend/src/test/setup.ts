@@ -1,6 +1,7 @@
 import './storage' // must stay first: fixes localStorage before app modules load
 import '@testing-library/jest-dom/vitest'
 import { cleanup } from '@testing-library/react'
+import { useSearchStore } from '@/features/patients/searchStore'
 import { useThemeStore } from '@/lib/theme'
 import { mockMatchMedia } from './matchMedia'
 import { server } from './server'
@@ -20,6 +21,7 @@ afterEach(() => {
   vi.restoreAllMocks()
   vi.unstubAllGlobals()
   useThemeStore.setState({ theme: 'system' })
+  useSearchStore.setState({ search: '' })
   localStorage.clear()
   document.documentElement.classList.remove('dark')
 })

@@ -30,14 +30,23 @@ def test_every_response_has_a_generated_request_id(client: TestClient, path: str
 
 
 def test_valid_incoming_request_id_is_echoed(client: TestClient) -> None:
-    response = client.get("/patients", headers={"X-Request-ID": "abc-123-XYZ"})
+    incoming = str(uuid.uuid4())
+    response = client.get("/patients", headers={"X-Request-ID": incoming})
 
-    assert response.headers["X-Request-ID"] == "abc-123-XYZ"
+    assert response.headers["X-Request-ID"] == incoming
 
 
 @pytest.mark.parametrize(
     "incoming",
-    ["has spaces", "semi;colon", "x" * 65, "under_score", "<script>"],
+    [
+        "has spaces",
+        "semi;colon",
+        "x" * 65,
+        "under_score",
+        "<script>",
+        "Jane-Doe-1950-03-04",
+        "abc-123-XYZ",
+    ],
 )
 def test_unsafe_incoming_request_id_is_replaced(client: TestClient, incoming: str) -> None:
     response = client.get("/patients", headers={"X-Request-ID": incoming})

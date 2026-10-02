@@ -7,6 +7,7 @@ import {
   type SortField,
   type SortOrder,
 } from '@/api/types'
+import { useSearchStore } from './searchStore'
 
 export const PAGE_SIZES = [10, 20, 50, 100] as const
 export const LIST_SORT_FIELDS = [
@@ -36,7 +37,12 @@ const DEFAULTS: ListParams = {
   order: 'asc',
 }
 
-function parse(sp: URLSearchParams): ListParams {
+/** The params that go in the URL: everything except `search`, which is PHI. */
+const URL_KEYS = (Object.keys(DEFAULTS) as (keyof ListParams)[]).filter(
+  (key): key is Exclude<keyof ListParams, 'search'> => key !== 'search',
+)
+
+function parse(sp: URLSearchParams): Omit<ListParams, 'search'> {
   const page = Number(sp.get('page'))
   const pageSize = Number(sp.get('page_size'))
   const status = sp.get('status') as PatientStatus | null
@@ -45,31 +51,38 @@ function parse(sp: URLSearchParams): ListParams {
   return {
     page: Number.isInteger(page) && page >= 1 ? page : DEFAULTS.page,
     page_size: (PAGE_SIZES as readonly number[]).includes(pageSize) ? pageSize : DEFAULTS.page_size,
-    search: (sp.get('search') ?? '').trim().slice(0, 100),
     status: status && PATIENT_STATUSES.includes(status) ? status : undefined,
     sort: sort && LIST_SORT_FIELDS.includes(sort) ? sort : DEFAULTS.sort,
     order: order === 'desc' ? 'desc' : 'asc',
   }
 }
 
-/** List view state lives in the query string so it is shareable and survives back/forward. */
+/**
+ * List view state lives in the query string so it is shareable and survives back/forward,
+ * except the search term (PHI), which is held in memory only.
+ */
 export function useListParams() {
   const [searchParams, setSearchParams] = useSearchParams()
-  const params = useMemo(() => parse(searchParams), [searchParams])
+  const search = useSearchStore((s) => s.search)
+  const setSearch = useSearchStore((s) => s.setSearch)
+  const params = useMemo<ListParams>(
+    () => ({ ...parse(searchParams), search: search.trim().slice(0, 100) }),
+    [searchParams, search],
+  )
 
   const update = useCallback(
     (patch: Partial<ListParams>, options?: { replace?: boolean }) => {
       // Any change other than paging itself goes back to the first page.
       const next: ListParams = { ...params, page: 1, ...patch }
+      if (patch.search !== undefined) setSearch(patch.search)
       const sp = new URLSearchParams()
-      for (const key of Object.keys(DEFAULTS) as (keyof ListParams)[]) {
+      for (const key of URL_KEYS) {
         const value = next[key]
-        if (value !== undefined && value !== '' && value !== DEFAULTS[key])
-          sp.set(key, String(value))
+        if (value !== undefined && value !== DEFAULTS[key]) sp.set(key, String(value))
       }
       setSearchParams(sp, options)
     },
-    [params, setSearchParams],
+    [params, setSearchParams, setSearch],
   )
 
   const apiParams: PatientListParams = {
@@ -81,5 +94,5 @@ export function useListParams() {
     order: params.order,
   }
 
-  return { params, apiParams, update, search: searchParams.toString() }
+  return { params, apiParams, update, query: searchParams.toString() }
 }

@@ -1,11 +1,11 @@
 import { memo } from 'react'
 import { Link } from 'react-router-dom'
-import type { Patient } from '@/api/types'
+import type { PatientListItem } from '@/api/types'
 import { StatusBadge } from '@/components/StatusBadge'
 import { Card } from '@/components/ui/card'
 import { formatDate, fullName } from '@/lib/format'
 
-function Initials({ patient }: { patient: Patient }) {
+function Initials({ patient }: { patient: PatientListItem }) {
   return (
     <span
       aria-hidden
@@ -18,7 +18,7 @@ function Initials({ patient }: { patient: Patient }) {
 }
 
 interface RowProps {
-  patient: Patient
+  patient: PatientListItem
   /** Query string of the list view, so the detail page can link back to it. */
   from: string
   index: number

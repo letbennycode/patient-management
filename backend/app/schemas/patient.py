@@ -168,8 +168,26 @@ class PatientOut(BaseModel):
         return calculate_age(self.date_of_birth)
 
 
+class PatientListItem(BaseModel):
+    """Row of GET /patients: only what the list shows, not contact or clinical details."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    first_name: str
+    last_name: str
+    date_of_birth: date = Field(exclude=True)
+    status: PatientStatus
+    last_visit: date | None
+
+    @computed_field
+    @property
+    def age(self) -> int:
+        return calculate_age(self.date_of_birth)
+
+
 class PatientPage(BaseModel):
-    items: list[PatientOut]
+    items: list[PatientListItem]
     total: int
     page: int
     page_size: int

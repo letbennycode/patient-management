@@ -21,7 +21,7 @@ function ListSkeleton() {
 }
 
 export function PatientList() {
-  const { params, apiParams, update, search } = useListParams()
+  const { params, apiParams, update, query } = useListParams()
   const { data, isPending, isError, error, refetch, isFetching, isPlaceholderData } =
     usePatients(apiParams)
   const isWide = useMediaQuery('(min-width: 768px)', true)
@@ -34,7 +34,7 @@ export function PatientList() {
   }, [data, isPlaceholderData, params.page, totalPages, update])
 
   const hasFilters = Boolean(params.search || params.status)
-  const from = search ? `?${search}` : ''
+  const from = query ? `?${query}` : ''
   const updating = isFetching && !isPending
 
   const toggleSort = (field: typeof params.sort) =>

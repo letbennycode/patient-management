@@ -70,7 +70,8 @@ describe('PatientDetailPage', () => {
     expect(
       await screen.findByRole('heading', { level: 1, name: 'Delta Fixture' }),
     ).toBeInTheDocument()
-    expect(document.title).toBe('Delta Fixture · Patient Management')
+    // The patient's name is PHI: it must not end up in browser history via the tab title.
+    expect(document.title).toBe('Patient details · Patient Management')
     expect(screen.getByText('Critical')).toBeInTheDocument()
     expect(screen.getByText('46 years old')).toBeInTheDocument()
     expect(screen.getByText('Born 12 Apr 1980')).toBeInTheDocument()

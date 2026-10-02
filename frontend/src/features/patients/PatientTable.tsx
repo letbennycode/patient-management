@@ -1,5 +1,5 @@
 import { ArrowDownIcon, ArrowUpIcon, ChevronsUpDownIcon } from 'lucide-react'
-import type { Patient } from '@/api/types'
+import type { PatientListItem } from '@/api/types'
 import { cn } from '@/lib/utils'
 import { PatientCard, PatientRow } from './PatientRow'
 import { LIST_SORT_FIELDS, type ListParams } from './useListParams'
@@ -13,7 +13,7 @@ const COLUMNS: { label: string; sort?: (typeof LIST_SORT_FIELDS)[number] }[] = [
 ]
 
 interface ListProps {
-  patients: Patient[]
+  patients: PatientListItem[]
   from: string
   dimmed: boolean
 }

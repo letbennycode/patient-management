@@ -19,9 +19,18 @@ _PATTERNS: list[tuple[str, re.Pattern[str]]] = [
         "DATE",
         re.compile(
             r"\b(?:\d{1,2}(?:st|nd|rd|th)?\s+)?"
-            r"(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|"
+            r"(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|jun(?:e)?|jul(?:y)?|"
             r"aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\.?"
             r"(?:\s+\d{1,2}(?:st|nd|rd|th)?)?,?\s*(?:\d{4})?\b",
+            re.I,
+        ),
+    ),
+    # "May" is also a common word, so it only counts as a date next to a day or a year.
+    (
+        "DATE",
+        re.compile(
+            r"\b(?:\d{1,2}(?:st|nd|rd|th)?\s+may\b(?:,?\s*\d{4})?"
+            r"|may\s+(?:\d{1,2}(?:st|nd|rd|th)?(?:,?\s*\d{4})?|\d{4})\b)",
             re.I,
         ),
     ),
@@ -62,9 +71,12 @@ _LONG_DIGITS = re.compile(r"\b\d{6,}\b")
 def redact(text: str, known_identifiers: Iterable[str | None] = ()) -> str:
     """Mask the patient's own identifiers literally, then common PHI formats by pattern."""
     # Longest first so "Jane Doe" is masked before "Jane".
-    literals = sorted({i.strip() for i in known_identifiers if i and len(i.strip()) >= 2}, key=len)
-    for literal in reversed(literals):
-        text = re.sub(re.escape(literal), "[REDACTED]", text, flags=re.I)
+    literals = {i.strip() for i in known_identifiers if i and len(i.strip()) >= 2}
+    if literals:
+        # One pass, whole words only: "Ed" must not hit "Prescribed", and a later literal must
+        # not match inside an earlier "[REDACTED]". Longest first so "Jane Doe" beats "Jane".
+        alternatives = "|".join(re.escape(lit) for lit in sorted(literals, key=len, reverse=True))
+        text = re.sub(rf"(?<!\w)(?:{alternatives})(?!\w)", "[REDACTED]", text, flags=re.I)
     for label, pattern in _PATTERNS:
         text = pattern.sub(f"[{label}]", text)
     return _LONG_DIGITS.sub("[ID]", text)

@@ -45,3 +45,19 @@ def test_clinical_content_is_preserved() -> None:
 @pytest.mark.parametrize(("age", "expected"), [(5, "5"), (89, "89"), (90, "90+"), (104, "90+")])
 def test_age_bucket_follows_safe_harbor(age: int, expected: str) -> None:
     assert age_bucket(age) == expected
+
+
+def test_known_identifiers_only_match_whole_words() -> None:
+    assert redact("Prescribed rest for Ed", ["Ed"]) == "Prescribed rest for [REDACTED]"
+
+
+def test_known_identifiers_do_not_corrupt_each_others_placeholders() -> None:
+    result = redact("Ed moved to Springfield", ["Ed", "Springfield"])
+
+    assert result == "[REDACTED] moved to [REDACTED]"
+
+
+def test_the_word_may_is_not_a_date_but_may_dates_are() -> None:
+    assert redact("Symptoms may improve") == "Symptoms may improve"
+    assert "2026" not in redact("Seen 5 May 2026 and May 5, 2026")
+    assert "[DATE]" in redact("Follow up in May 2026")
