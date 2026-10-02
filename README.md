@@ -1,5 +1,7 @@
 # Patient Management Dashboard
 
+[![CI](https://github.com/letbennycode/patient-management/actions/workflows/ci.yml/badge.svg)](https://github.com/letbennycode/patient-management/actions/workflows/ci.yml)
+
 A healthcare dashboard for a medical practice: browse, search, create, edit and delete patients, attach clinical notes, and view a generated patient summary. React + TypeScript frontend, FastAPI backend, PostgreSQL.
 
 All data is fake (Faker, fixed seed). No real names or records are used anywhere.
