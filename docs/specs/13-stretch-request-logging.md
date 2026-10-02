@@ -8,7 +8,7 @@ Only build if required chunks 01–10 are done.
 Every backend request produces one structured log line with a request ID, without ever logging patient data.
 
 ## Behaviour
-- Middleware assigns a request ID: reuses an incoming `X-Request-ID` header if it is a safe token (≤ 64 chars, `[A-Za-z0-9-]`), otherwise generates a UUID. Returned in the `X-Request-ID` response header.
+- Middleware assigns a request ID: reuses an incoming `X-Request-ID` header only if it parses as a UUID (so callers cannot write free text into logs), otherwise generates a UUID. Returned in the `X-Request-ID` response header.
 - On completion logs: request ID, method, route **template** (e.g. `/patients/{id}`, not the concrete path or query string), status code, duration ms. Unhandled exceptions log the same fields with status 500 and the exception type only.
 - Never logs query strings (search terms are names), bodies, headers other than the request ID, or path parameters.
 - `/health` may be logged at debug level to reduce noise.

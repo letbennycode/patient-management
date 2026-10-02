@@ -2,6 +2,7 @@ import { ArrowLeftIcon, PencilIcon, Trash2Icon } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useLocation, useParams } from 'react-router-dom'
 import { usePatient } from '@/api'
+import type { ListLinkState } from '@/features/patients/useListParams'
 import { PageHeader } from '@/components/PageHeader'
 import { QueryError } from '@/components/QueryError'
 import { StatusBadge } from '@/components/StatusBadge'
@@ -31,7 +32,8 @@ export default function PatientDetailPage() {
   const location = useLocation()
   const [deleteOpen, setDeleteOpen] = useState(false)
   const { data: patient, isPending, isError, error, refetch } = usePatient(id)
-  const backTo = `/patients${(location.state as { from?: string } | null)?.from ?? ''}`
+  const listState = (location.state ?? {}) as Partial<ListLinkState>
+  const backTo = `/patients${listState.from ?? ''}`
 
   if (isPending) {
     return (
@@ -55,6 +57,7 @@ export default function PatientDetailPage() {
     <>
       <Link
         to={backTo}
+        state={{ search: listState.search ?? '' }}
         className="mb-4 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
       >
         <ArrowLeftIcon className="size-4" />

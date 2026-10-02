@@ -4,6 +4,7 @@ import type { PatientListItem } from '@/api/types'
 import { StatusBadge } from '@/components/StatusBadge'
 import { Card } from '@/components/ui/card'
 import { formatDate, fullName } from '@/lib/format'
+import type { ListLinkState } from './useListParams'
 
 function Initials({ patient }: { patient: PatientListItem }) {
   return (
@@ -19,15 +20,15 @@ function Initials({ patient }: { patient: PatientListItem }) {
 
 interface RowProps {
   patient: PatientListItem
-  /** Query string of the list view, so the detail page can link back to it. */
-  from: string
+  /** Passed to the detail page so it can link back to this list view. */
+  linkState: ListLinkState
   index: number
   measureElement?: (el: HTMLElement | null) => void
 }
 
 export const PatientRow = memo(function PatientRow({
   patient,
-  from,
+  linkState,
   index,
   measureElement,
 }: RowProps) {
@@ -43,7 +44,7 @@ export const PatientRow = memo(function PatientRow({
           <Initials patient={patient} />
           <Link
             to={`/patients/${patient.id}`}
-            state={{ from }}
+            state={linkState}
             className="underline-offset-4 hover:underline"
           >
             {fullName(patient)}
@@ -61,13 +62,13 @@ export const PatientRow = memo(function PatientRow({
 
 export const PatientCard = memo(function PatientCard({
   patient,
-  from,
+  linkState,
   index,
   measureElement,
 }: RowProps) {
   return (
     <div ref={measureElement} data-index={index} className="pb-3">
-      <Link to={`/patients/${patient.id}`} state={{ from }} className="block">
+      <Link to={`/patients/${patient.id}`} state={linkState} className="block">
         <Card className="flex-row items-center gap-3 p-4 transition-colors hover:bg-muted/40">
           <Initials patient={patient} />
           <div className="min-w-0 flex-1">

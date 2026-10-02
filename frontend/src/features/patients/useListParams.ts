@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useLocation, useSearchParams } from 'react-router-dom'
 import {
   PATIENT_STATUSES,
   type PatientListParams,
@@ -7,7 +7,6 @@ import {
   type SortField,
   type SortOrder,
 } from '@/api/types'
-import { useSearchStore } from './searchStore'
 
 export const PAGE_SIZES = [10, 20, 50, 100] as const
 export const LIST_SORT_FIELDS = [
@@ -57,14 +56,23 @@ function parse(sp: URLSearchParams): Omit<ListParams, 'search'> {
   }
 }
 
+/** What a patient link carries so the detail page can return to the same list view. */
+export interface ListLinkState {
+  /** Query string of the list view (no search term). */
+  from: string
+  search: string
+}
+
 /**
  * List view state lives in the query string so it is shareable and survives back/forward,
- * except the search term (PHI), which is held in memory only.
+ * except the search term (PHI). That goes in this history entry's `state`: back/forward
+ * restores it, but it is never in the address bar, a shared link or a fresh navigation to
+ * the list (a sidebar link or dashboard card starts with no search).
  */
 export function useListParams() {
   const [searchParams, setSearchParams] = useSearchParams()
-  const search = useSearchStore((s) => s.search)
-  const setSearch = useSearchStore((s) => s.setSearch)
+  const { state } = useLocation()
+  const search: string = typeof state?.search === 'string' ? state.search : ''
   const params = useMemo<ListParams>(
     () => ({ ...parse(searchParams), search: search.trim().slice(0, 100) }),
     [searchParams, search],
@@ -74,15 +82,14 @@ export function useListParams() {
     (patch: Partial<ListParams>, options?: { replace?: boolean }) => {
       // Any change other than paging itself goes back to the first page.
       const next: ListParams = { ...params, page: 1, ...patch }
-      if (patch.search !== undefined) setSearch(patch.search)
       const sp = new URLSearchParams()
       for (const key of URL_KEYS) {
         const value = next[key]
         if (value !== undefined && value !== DEFAULTS[key]) sp.set(key, String(value))
       }
-      setSearchParams(sp, options)
+      setSearchParams(sp, { ...options, state: { search: next.search } })
     },
-    [params, setSearchParams, setSearch],
+    [params, setSearchParams],
   )
 
   const apiParams: PatientListParams = {
@@ -94,5 +101,10 @@ export function useListParams() {
     order: params.order,
   }
 
-  return { params, apiParams, update, query: searchParams.toString() }
+  const linkState: ListLinkState = {
+    from: searchParams.toString() ? `?${searchParams}` : '',
+    search: params.search,
+  }
+
+  return { params, apiParams, update, linkState }
 }

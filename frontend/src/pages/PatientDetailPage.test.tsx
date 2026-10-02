@@ -150,7 +150,7 @@ describe('PatientDetailPage', () => {
 
   it('links back to the list preserving its query string, and to the edit form', async () => {
     servePatient(full)
-    renderDetail(full.id, { from: '?status=critical&page=2' })
+    renderDetail(full.id, { from: '?status=critical&page=2', search: 'delta' })
     await screen.findByRole('heading', { level: 1, name: 'Delta Fixture' })
 
     expect(screen.getByRole('link', { name: 'Back to patients' })).toHaveAttribute(
@@ -161,6 +161,19 @@ describe('PatientDetailPage', () => {
       'href',
       `/patients/${full.id}/edit`,
     )
+  })
+
+  it('hands the search term back to the list through history state, not the URL', async () => {
+    const user = userEvent.setup()
+    servePatient(full)
+    const { location } = renderDetail(full.id, { from: '?status=critical', search: 'delta' })
+    await screen.findByRole('heading', { level: 1, name: 'Delta Fixture' })
+
+    await user.click(screen.getByRole('link', { name: 'Back to patients' }))
+
+    expect(location().pathname).toBe('/patients')
+    expect(location().search).toBe('?status=critical')
+    expect(location().state).toEqual({ search: 'delta' })
   })
 
   it('keeps the profile visible when the summary fails', async () => {

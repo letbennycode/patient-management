@@ -9,9 +9,14 @@ import re
 from collections.abc import Iterable
 
 # Most specific first, so e.g. an SSN isn't consumed by the generic phone pattern.
-_PATTERNS: list[tuple[str, re.Pattern[str]]] = [
+# Emails and URLs are masked before the patient's own identifiers, because a literal pass
+# would otherwise break "jane.doe@gmail.com" into "[REDACTED].[REDACTED]@gmail.com".
+_ADDRESSES: list[tuple[str, re.Pattern[str]]] = [
     ("EMAIL", re.compile(r"[\w.+-]+@[\w-]+(?:\.[\w-]+)+")),
     ("URL", re.compile(r"(?:https?://|www\.)\S+", re.I)),
+]
+
+_PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     ("SSN", re.compile(r"\b\d{3}-\d{2}-\d{4}\b")),
     # ISO and numeric dates, then written dates ("5 Mar 2024", "March 5, 2024").
     ("DATE", re.compile(r"\b\d{4}-\d{1,2}-\d{1,2}\b|\b\d{1,2}[/.-]\d{1,2}[/.-]\d{2,4}\b")),
@@ -69,8 +74,9 @@ _LONG_DIGITS = re.compile(r"\b\d{6,}\b")
 
 
 def redact(text: str, known_identifiers: Iterable[str | None] = ()) -> str:
-    """Mask the patient's own identifiers literally, then common PHI formats by pattern."""
-    # Longest first so "Jane Doe" is masked before "Jane".
+    """Mask emails and URLs, then the patient's own identifiers, then other PHI formats."""
+    for label, pattern in _ADDRESSES:
+        text = pattern.sub(f"[{label}]", text)
     literals = {i.strip() for i in known_identifiers if i and len(i.strip()) >= 2}
     if literals:
         # One pass, whole words only: "Ed" must not hit "Prescribed", and a later literal must

@@ -6,10 +6,10 @@ import { NETWORK_MESSAGE } from '@/lib/errors'
 import { makePage, makePatient, makePatients } from '@/test/fixtures'
 import { API } from '@/test/handlers'
 import { mockMatchMedia } from '@/test/matchMedia'
+import type { InitialEntry } from 'react-router-dom'
 import { renderWithProviders } from '@/test/render'
 import { recordRequests, server } from '@/test/server'
 import { PatientList } from './PatientList'
-import { useSearchStore } from './searchStore'
 
 /** Serves `patients` with server-side search, status filter and pagination, like the API. */
 function serve(patients: Patient[]) {
@@ -38,7 +38,7 @@ const listRequests = (requests: ReturnType<typeof recordRequests>) =>
 const lastParams = (requests: ReturnType<typeof recordRequests>) =>
   listRequests(requests).at(-1)!.url.searchParams
 
-function renderList(route = '/patients') {
+function renderList(route: InitialEntry = '/patients') {
   return renderWithProviders(<PatientList />, { route, path: '/patients' })
 }
 
@@ -114,6 +114,7 @@ describe('PatientList', () => {
       expect(searched()[0].url.searchParams.get('search')).toBe('bra')
       expect(searched()[0].url.searchParams.get('page')).toBe('1')
       expect(location().search).toBe('') // the term is PHI: never in the URL
+      expect(location().state).toEqual({ search: 'bra' }) // only in this history entry
 
       // Previous results stay visible with a non-blocking indicator.
       expect(screen.getByRole('link', { name: 'Alpha Tester' })).toBeInTheDocument()
@@ -126,6 +127,26 @@ describe('PatientList', () => {
       expect(screen.getByRole('link', { name: 'Bravo Tester' })).toBeInTheDocument()
       expect(searched()).toHaveLength(1)
     })
+  })
+
+  it('starts with no search when the list is opened without history state', async () => {
+    serve([alpha, bravo])
+    const requests = recordRequests()
+    renderList('/patients?status=critical')
+    await screen.findByRole('link', { name: 'Bravo Tester' })
+
+    expect(screen.getByRole('searchbox', { name: 'Search patients' })).toHaveValue('')
+    expect(lastParams(requests).has('search')).toBe(false)
+  })
+
+  it('restores the search term from the history entry', async () => {
+    serve([alpha, bravo])
+    const requests = recordRequests()
+    renderList({ pathname: '/patients', state: { search: 'bra' } })
+    await screen.findByRole('link', { name: 'Bravo Tester' })
+
+    expect(screen.getByRole('searchbox', { name: 'Search patients' })).toHaveValue('bra')
+    expect(lastParams(requests).get('search')).toBe('bra')
   })
 
   it('status filter sends `status` and resets to page 1', async () => {
@@ -256,8 +277,11 @@ describe('PatientList', () => {
       const user = userEvent.setup()
       serve([alpha, bravo])
       const requests = recordRequests()
-      useSearchStore.setState({ search: 'zzz' })
-      const { location } = renderList('/patients?status=inactive')
+      const { location } = renderList({
+        pathname: '/patients',
+        search: '?status=inactive',
+        state: { search: 'zzz' },
+      })
 
       expect(await screen.findByText('No patients match your search')).toBeInTheDocument()
       expect(screen.getByRole('searchbox', { name: 'Search patients' })).toHaveValue('zzz')

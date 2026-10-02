@@ -37,11 +37,24 @@ export function makePatients(count: number, overrides: Partial<Patient> = {}): P
   )
 }
 
+/** Builds a GET /patients response: items are cut down to the list fields, like the API does. */
 export function makePage(
   items: Patient[],
   { total = items.length, page = 1, page_size = 20 }: Partial<Omit<PatientPage, 'items'>> = {},
 ): PatientPage {
-  return { items, total, page, page_size }
+  return {
+    items: items.map(({ id, first_name, last_name, age, status, last_visit }) => ({
+      id,
+      first_name,
+      last_name,
+      age,
+      status,
+      last_visit,
+    })),
+    total,
+    page,
+    page_size,
+  }
 }
 
 export function makeNote(overrides: Partial<Note> = {}): Note {

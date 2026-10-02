@@ -13,7 +13,7 @@ The `/patients` page lists patients from `GET /patients` with search, status fil
   - Status filter select: All, Active, Inactive, Critical.
   - Sort: clickable column headers on table (toggle asc/desc, with indicator) and a sort select on mobile. Fields: name, age, last visit, status.
   - Pagination: Previous/Next, "Page X of Y", "Showing a–b of total", page size select (10, 20, 50).
-- **URL state:** `search`, `status`, `sort`, `order`, `page`, `page_size` live in the query string so the view is shareable and survives back/forward. Changing search, filter, sort or page size resets `page` to 1. Invalid URL values fall back to defaults.
+- **URL state:** `status`, `sort`, `order`, `page`, `page_size` live in the query string so the view is shareable and survives back/forward. `search` is PHI (names), so it is **not** in the URL: it lives in the list entry's router history state (restored by back/forward and by the detail page's back link, empty for any fresh navigation to the list). Changing search, filter, sort or page size resets `page` to 1. Invalid URL values fall back to defaults.
 - **States:**
   - Loading (first load): skeleton rows.
   - Empty, no filters: "No patients yet" + "New patient" button.

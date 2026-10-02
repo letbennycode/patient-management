@@ -27,9 +27,11 @@ Reset the database and reseed:
 docker compose down -v && docker compose up --build
 ```
 
+If port 5432 is already in use (e.g. a local Postgres), set `DB_HOST_PORT=5433` in `.env`. pytest reads `TEST_DATABASE_URL` from your shell, not from `.env`, so also run `export TEST_DATABASE_URL=postgresql+psycopg://postgres:postgres@localhost:5433/patients_test`; otherwise the tests hit whatever is on 5432.
+
 If you already have a `pgdata` volume from before, the test database won't exist; run `docker compose down -v` once (or `createdb patients_test`).
 
-Source is bind-mounted into the containers, so backend and frontend both hot reload.
+Source is bind-mounted into the containers, so backend and frontend both hot reload. After pulling changes to a Dockerfile or `package.json`, run `docker compose up --build -V` so the frontend gets a fresh `node_modules` volume (a plain rebuild reuses the old one, which can have the wrong owner or stale packages).
 
 ## Tests and lint
 
@@ -60,7 +62,8 @@ Defined in `.env.example`.
 | ------------------------------------------ | --------------------------------------------------------------------------- |
 | `POSTGRES_USER/PASSWORD/DB`                | Credentials for the `db` container                                          |
 | `DATABASE_URL`                             | Backend connection string (host is `db` inside compose)                     |
-| `TEST_DATABASE_URL`                        | Database used by pytest                                                     |
+| `DB_HOST_PORT` (optional)                  | Host port for the db container (default `5432`); set it if 5432 is taken    |
+| `TEST_DATABASE_URL`                        | Database used by pytest (export it in your shell; `.env` is not read)       |
 | `SEED_ON_STARTUP`                          | `true` seeds an empty database on startup; tests set `false`                |
 | `CORS_ORIGINS`                             | Comma-separated allowed origins (default `http://localhost:5173`)           |
 | `LLM_SUMMARY_ENABLED`                      | `false` by default. The LLM summary runs only when this is `true` **and** a key is set |
@@ -101,7 +104,7 @@ Errors use FastAPI's `{"detail": ...}` body: 404 for missing resources, 422 for 
 
 ## Decisions
 
-- **Server state vs UI state:** TanStack Query owns everything fetched from the API (caching, invalidation, retries); Zustand holds only UI state (the theme). List view state (filter, sort, page) lives in the URL so it is shareable and survives back/forward. The search term is held in memory only, because names are PHI and must not end up in browser history or shared links.
+- **Server state vs UI state:** TanStack Query owns everything fetched from the API (caching, invalidation, retries); Zustand holds only UI state (the theme). List view state (filter, sort, page) lives in the URL so it is shareable and survives back/forward. The search term is the exception: names are PHI, so it lives in the list's router history state, not the URL. Back/forward restores it, but it never appears in the address bar, bookmarks or shared links, and opening the list from the sidebar or a dashboard card starts with no search. (The API request itself is still `GET /patients?search=`, so the term is visible in browser devtools; fine here, but a real system would use a POST body or keep it off any shared proxy logs.)
 - **100+ patients:** pagination, search, sort and filter all happen in SQL (`LIMIT/OFFSET` + `COUNT`). The UI only ever holds one page; very large pages are windowed with TanStack Virtual.
 - **Non-blocking search:** the input is local state, the debounced (300 ms) value drives the query, and previous results stay visible while the next page loads.
 - **Validation twice, same rules:** Pydantic on the server, Zod on the client. Server errors are mapped back onto form fields.
@@ -121,8 +124,6 @@ Errors use FastAPI's `{"detail": ...}` body: 404 for missing resources, 422 for 
 ## Not ready for real patient data
 
 This is a take-home demo and **must not be used with real PHI as it stands**. It has no authentication or authorization, no audit log of who read what, no rate limiting (every summary request can be a paid third-party LLM call when the LLM is enabled), no TLS or encryption at rest, and no data retention or deletion policy. Redaction before the LLM is best-effort.
-
-If you change dependencies and the frontend misbehaves, run `docker compose up --build -V`: the `node_modules` volume survives a plain rebuild.
 
 ## What I'd do next
 

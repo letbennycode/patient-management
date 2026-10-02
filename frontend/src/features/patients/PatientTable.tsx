@@ -2,7 +2,7 @@ import { ArrowDownIcon, ArrowUpIcon, ChevronsUpDownIcon } from 'lucide-react'
 import type { PatientListItem } from '@/api/types'
 import { cn } from '@/lib/utils'
 import { PatientCard, PatientRow } from './PatientRow'
-import { LIST_SORT_FIELDS, type ListParams } from './useListParams'
+import { LIST_SORT_FIELDS, type ListLinkState, type ListParams } from './useListParams'
 import { useVirtualRows } from './useVirtualRows'
 
 const COLUMNS: { label: string; sort?: (typeof LIST_SORT_FIELDS)[number] }[] = [
@@ -14,7 +14,7 @@ const COLUMNS: { label: string; sort?: (typeof LIST_SORT_FIELDS)[number] }[] = [
 
 interface ListProps {
   patients: PatientListItem[]
-  from: string
+  linkState: ListLinkState
   dimmed: boolean
 }
 
@@ -27,7 +27,7 @@ const CARD =
   'rounded-2xl bg-card shadow-[0_1px_2px_rgb(18_18_18/0.04)] ring-1 ring-foreground/[0.07]'
 const SCROLL_BOX = 'h-[70vh] overflow-auto'
 
-export function PatientTable({ patients, from, dimmed, params, onSort }: TableProps) {
+export function PatientTable({ patients, linkState, dimmed, params, onSort }: TableProps) {
   const { enabled, scrollRef, indexes, padTop, padBottom, measureElement } = useVirtualRows(
     patients.length,
     56,
@@ -93,7 +93,7 @@ export function PatientTable({ patients, from, dimmed, params, onSort }: TablePr
             <PatientRow
               key={patients[i].id}
               patient={patients[i]}
-              from={from}
+              linkState={linkState}
               index={i}
               measureElement={measureElement}
             />
@@ -109,7 +109,7 @@ export function PatientTable({ patients, from, dimmed, params, onSort }: TablePr
   )
 }
 
-export function PatientCards({ patients, from, dimmed }: ListProps) {
+export function PatientCards({ patients, linkState, dimmed }: ListProps) {
   const { enabled, scrollRef, indexes, padTop, padBottom, measureElement } = useVirtualRows(
     patients.length,
     88,
@@ -125,7 +125,7 @@ export function PatientCards({ patients, from, dimmed }: ListProps) {
           <PatientCard
             key={patients[i].id}
             patient={patients[i]}
-            from={from}
+            linkState={linkState}
             index={i}
             measureElement={measureElement}
           />

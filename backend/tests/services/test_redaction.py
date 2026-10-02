@@ -61,3 +61,10 @@ def test_the_word_may_is_not_a_date_but_may_dates_are() -> None:
     assert redact("Symptoms may improve") == "Symptoms may improve"
     assert "2026" not in redact("Seen 5 May 2026 and May 5, 2026")
     assert "[DATE]" in redact("Follow up in May 2026")
+
+
+def test_an_email_containing_the_patients_name_is_masked_whole() -> None:
+    result = redact("Her sister is jane.doe@gmail.com", ["Jane", "Doe"])
+
+    assert "gmail" not in result
+    assert "[EMAIL]" in result

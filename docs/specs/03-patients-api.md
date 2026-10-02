@@ -18,7 +18,7 @@ All fields from 02 plus derived `age`:
   "created_at": "2026-09-30T12:00:00Z", "updated_at": "2026-09-30T12:00:00Z"
 }
 ```
-List items use the same full shape.
+List items (`GET /patients`) use a slimmer shape, `PatientListItem`: `id`, `first_name`, `last_name`, `age`, `status`, `last_visit`. Contact and clinical fields are only returned by `GET /patients/{id}` and the write endpoints.
 
 ## Patient input (POST and PUT body)
 Required: `first_name`, `last_name`, `date_of_birth`. Optional with defaults: `status` (`active`), `allergies` (`[]`), `conditions` (`[]`); all other fields optional/nullable. `id`, `age`, `created_at`, `updated_at` are not accepted (ignored or rejected as extra fields; reject with 422 preferred: `extra="forbid"`).
@@ -39,7 +39,7 @@ Query params:
 
 - `search`: case-insensitive substring match on first name, last name, or "first last" full name.
 - `sort=name` orders by last name, then first name. `sort=age` orders by age (i.e. reverse `date_of_birth`). `last_visit` nulls always last. Every sort adds `id` as tiebreaker so pages are stable.
-- Response `200 { items: Patient[], total, page, page_size }`. `total` counts all matches. A page past the end returns `items: []` with the correct `total`.
+- Response `200 { items: PatientListItem[], total, page, page_size }`. `total` counts all matches. A page past the end returns `items: []` with the correct `total`.
 - Invalid params → `422`.
 
 ### `GET /patients/{id}`

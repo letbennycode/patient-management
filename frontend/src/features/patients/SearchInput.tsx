@@ -17,11 +17,11 @@ export function SearchInput({ value, onSearch }: SearchInputProps) {
 
   useEffect(() => {
     if (debounced !== value) onSearch(debounced)
-    // Only react to the debounced text changing, not to URL changes.
+    // Only react to the debounced text changing, not to changes of `value`.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debounced])
 
-  // Keep the box in sync when the URL changes elsewhere (back button, "Clear filters").
+  // Keep the box in sync when the term changes elsewhere (back button, "Clear filters").
   useEffect(() => {
     if (value !== debounced) setText(value)
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -38,6 +38,7 @@ export function SearchInput({ value, onSearch }: SearchInputProps) {
         value={text}
         onChange={(e) => setText(e.target.value)}
         maxLength={100}
+        autoComplete="off"
       />
     </div>
   )
