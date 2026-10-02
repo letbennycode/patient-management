@@ -1,4 +1,10 @@
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+  keepPreviousData,
+  queryOptions,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query'
 import { request } from './client'
 import { summaryKeys } from './notes'
 import type { Patient, PatientInput, PatientListParams, PatientPage } from './types'
@@ -19,12 +25,16 @@ function toQueryString(params: PatientListParams): string {
   return qs ? `?${qs}` : ''
 }
 
-export function usePatients(params: PatientListParams) {
-  return useQuery({
+export function patientsQueryOptions(params: PatientListParams) {
+  return queryOptions({
     queryKey: patientKeys.list(params),
     queryFn: () => request<PatientPage>(`/patients${toQueryString(params)}`),
     placeholderData: keepPreviousData,
   })
+}
+
+export function usePatients(params: PatientListParams) {
+  return useQuery(patientsQueryOptions(params))
 }
 
 export function usePatient(id: string | undefined) {

@@ -47,7 +47,7 @@ pytest
 ruff check .
 
 # Frontend
-cd frontend
+cd ../frontend
 npm ci
 npm test            # vitest run
 npm run lint        # oxlint
@@ -85,7 +85,7 @@ Defined in `.env.example`.
 
 - Advanced backend: sort/filter/search query params, Alembic migrations, request logging middleware (request ID, route template, status, duration; never query strings or patient data).
 - Testing and quality: pytest API/service tests and Vitest component tests.
-- Developer experience: hot reload in Docker for both services; GitHub Actions CI (`.github/workflows/ci.yml`) running ruff and pytest (against Postgres 16) plus lint, typecheck, tests and build for the frontend.
+- Developer experience: hot reload in Docker for both services; GitHub Actions CI (`.github/workflows/ci.yml`) running ruff and pytest (against Postgres 16), lint, typecheck, tests and build for the frontend, and a `docker compose build` of the images.
 - UI/UX and performance: dark/light/system theme toggle (persisted, no flash on load); TanStack Virtual windowing when a page shows more than 50 rows (page size 100); route-level code splitting with `React.lazy`; a dependency-free status chart on the dashboard.
 
 ## API

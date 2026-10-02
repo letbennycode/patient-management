@@ -1,6 +1,7 @@
+import { useQueries } from '@tanstack/react-query'
 import { ArrowRightIcon, ArrowUpRightIcon } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import { PATIENT_STATUSES, type PatientStatus, usePatients } from '@/api'
+import { PATIENT_STATUSES, type PatientStatus, patientsQueryOptions, usePatients } from '@/api'
 import { PageHeader } from '@/components/PageHeader'
 import { QueryError } from '@/components/QueryError'
 import { buttonVariants } from '@/components/ui/button'
@@ -79,15 +80,28 @@ function CountCard({ label, to, status }: { label: string; to: string; status?: 
   )
 }
 
+/** Rounds shares to whole percents that always total 100 (largest-remainder method). */
+function percentages(totals: number[]): number[] {
+  const sum = totals.reduce((n, t) => n + t, 0)
+  const exact = totals.map((t) => (t / sum) * 100)
+  const floors = exact.map(Math.floor)
+  const byRemainder = exact.map((x, i) => ({ i, r: x - floors[i] })).sort((a, b) => b.r - a.r)
+  const missing = 100 - floors.reduce((n, f) => n + f, 0)
+  for (let k = 0; k < missing; k++) floors[byRemainder[k].i]++
+  return floors
+}
+
 function StatusChart() {
-  const queries = PATIENT_STATUSES.map((status) => ({
-    status,
-    // Same query keys as the count cards, so these are cache hits.
-    // eslint-disable-next-line react-hooks/rules-of-hooks -- PATIENT_STATUSES is a constant
-    total: usePatients({ page_size: 1, status }).data?.total,
-  }))
-  const sum = queries.reduce((n, q) => n + (q.total ?? 0), 0)
-  if (queries.some((q) => q.total === undefined) || sum === 0) return null
+  // Same query options as the count cards, so these are cache hits.
+  const results = useQueries({
+    queries: PATIENT_STATUSES.map((status) => patientsQueryOptions({ page_size: 1, status })),
+  })
+  const totals = results.map((r) => r.data?.total)
+  if (totals.some((t) => t === undefined)) return null
+  const counts = totals as number[]
+  const sum = counts.reduce((n, t) => n + t, 0)
+  if (sum === 0) return null
+  const shares = percentages(counts)
 
   return (
     <section aria-labelledby="status-chart-title" className="mt-8">
@@ -96,24 +110,24 @@ function StatusChart() {
       </h2>
       <div
         role="img"
-        aria-label={queries.map((q) => `${q.status}: ${q.total}`).join(', ')}
+        aria-label={PATIENT_STATUSES.map((s, i) => `${s}: ${counts[i]}`).join(', ')}
         className="flex h-3 w-full overflow-hidden rounded-full bg-muted"
       >
-        {queries.map((q) => (
+        {PATIENT_STATUSES.map((status, i) => (
           <div
-            key={q.status}
-            className={STATUS_DOTS[q.status]}
-            style={{ width: `${((q.total ?? 0) / sum) * 100}%` }}
+            key={status}
+            className={STATUS_DOTS[status]}
+            style={{ width: `${(counts[i] / sum) * 100}%` }}
           />
         ))}
       </div>
       <ul className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-sm text-muted-foreground">
-        {queries.map((q) => (
-          <li key={q.status} className="flex items-center gap-2">
-            <span aria-hidden className={cn('size-2 rounded-full', STATUS_DOTS[q.status])} />
-            {capitalize(q.status)}{' '}
+        {PATIENT_STATUSES.map((status, i) => (
+          <li key={status} className="flex items-center gap-2">
+            <span aria-hidden className={cn('size-2 rounded-full', STATUS_DOTS[status])} />
+            {capitalize(status)}{' '}
             <span className="tabular-nums text-foreground">
-              {q.total} ({Math.round(((q.total ?? 0) / sum) * 100)}%)
+              {counts[i]} ({shares[i]}%)
             </span>
           </li>
         ))}

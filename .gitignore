@@ -1,5 +1,7 @@
 # Secrets
 .env
+.env.*
+!.env.example
 
 # Assignment text: kept locally for Claude's agents, not published with the submission
 docs/take-home.md
